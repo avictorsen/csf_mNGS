@@ -1,0 +1,4 @@
+Archaea	10
+Bacteria	200
+Viruses	3
+Eukaryota	100
