@@ -1,0 +1,15 @@
+Cryptococcus neoformans	2
+Streptococcus pneumoniae	1
+Klebsiella	1.5
+Klebsiella pneumoniae	1.5
+Enterococcus faecium	1.0
+Streptomyces	3.5
+Staphylococcus aureus	3
+Escherichia coli	3
+Pseudomonas aeruginosa	1
+Human alphaherpesvirus 1	0.0
+Human alphaherpesvirus 2	0.0
+Human alphaherpesvirus 3	0.0
+betaherpesvirus 6	0.0
+Human betaherpesvirus 6B	0.0
+gammaherpesvirus 4	0.0

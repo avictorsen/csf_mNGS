@@ -1,0 +1,274 @@
+#!/bin/bash -l
+#SBATCH --job-name=name
+#SBATCH -p ag2tb
+#SBATCH --ntasks=32              ##CPUs PER NODE usually 32
+#SBATCH --mem-per-cpu=7500m	##MEM PER CPU
+#SBATCH --tmp=350g              ##SCRATCH SPACE
+#SBATCH --nodes=1               ##Nodes
+#SBATCH --time=12:00:00         ##WALL TIME
+#SBATCH --mail-type=ALL
+#SBATCH --mail-user=victo160@umn.edu
+
+echo "["`date`"] Script start."
+
+#######################################################################
+# EDIT BELOW HERE
+#######################################################################
+
+# This is the folder you want to create, which will contain
+# all of the results from running this pipeline. It should NOT
+# already exist. If this folder already exists, this script will
+# fail.
+PROJ_DIR=`pwd`
+
+# This is the folder that contains all the fastq file you want
+# to analyze. The script will look for any files that end in
+# .fastq or .fastq.gz.
+FASTQ_DIR=/home/thyagara/victo160/csf_mNGS/fastq/
+
+# If the negative directory is left as "" the script will process
+# files in the NEGATIVE* lists.  Otherwise it will create a soft link
+# within the working directory
+#NEGATIVE_DIR=""
+NEGATIVE_DIR="/home/thyagara/victo160/csf_mNGS/runs/BWA_prealigned/20230622-Negative/"
+
+UNKNOWNS_DNA=(
+2023-234_S16_R1_001.fastq.gz
+2023-234_S16_R2_001.fastq.gz
+)
+
+UNKNOWNS_RNA=(
+2023-233_S6_R1_001.fastq.gz
+2023-233_S6_R2_001.fastq.gz
+)
+
+NEGATIVE_DNA=(
+2023-262_S9_R1_001.fastq.gz
+2023-262_S9_R2_001.fastq.gz
+)
+
+NEGATIVE_RNA=(
+2023-261_S1_R1_001.fastq.gz
+2023-261_S1_R2_001.fastq.gz
+)
+
+POSITIVE=(
+)
+
+# location of database kraken, bracken, etc databases
+SHOTMETA_DB=/home/thyagara/victo160/csf_mNGS/shotmeta/db
+
+# Kraken version 1 or 2
+KV=2
+
+# Threads to use
+NODE=30
+
+#######################################################################
+# EDIT ABOVE HERE
+#######################################################################
+
+
+# Test whether the PROJ_DIR already exists
+if [ -d ${PROJ_DIR} ]; then
+    :
+    # The PROJ_DIR already exists
+#    echo "The shotmeta project directory ${PROJ_DIR} already exists. Deleting files in it!!"
+#    rm -fr ${PROJ_DIR}/input_fastqs
+#    rm -fr ${PROJ_DIR}/shotmeta
+    #exit 100
+else
+    echo "This shotmeta project directory is: ${PROJ_DIR}."
+fi
+
+# ---------------------------------------------------------------------
+# Make symlinks with correct filenames
+# ---------------------------------------------------------------------
+	
+mkdir -p $PROJ_DIR/input_fastqs
+cd $PROJ_DIR/input_fastqs
+
+for FILE in ${UNKNOWNS_DNA[@]} ${UNKNOWNS_RNA[@]} ${NEGATIVE_DNA[@]} ${NEGATIVE_RNA[@]} ${POSITIVE[@]}; do
+    if [ ! -f "${FASTQ_DIR}/${FILE}" ]; then
+        FIND_FILE=`find ${FASTQ_DIR} -name ${FILE}`
+        if [ ! -f "$FIND_FILE" ]; then
+            echo "Cannot find ${FASTQ_DIR}/${FILE}"
+	    exit
+        fi
+    else
+        FIND_FILE=${FASTQ_DIR}/${FILE};
+    fi
+    echo $FIND_FILE;
+    for FLINK in ${UNKNOWNS_DNA[@]} ${UNKNOWNS_RNA[@]}; do
+        if [[ "$FILE" = "$FLINK" ]]; then
+            TESTn=$((TESTn + 1))
+            for LINK in ${UNKNOWNS_DNA[@]}; do
+                if [[ "$FILE" = "$LINK" ]]; then
+                    if [[ "$FILE" =~ .*_R1_.*\.fastq* ]]; then
+                        if [[ "${UNKNOWNS_DNA[*]}" =~ "${FILE//_R1_/_R2_}" ]]; then
+                            UNKNOWNS_DNA=("${UNKNOWNS_DNA[@]/${FILE}}")
+                            UNKNOWNS_DNA=("${UNKNOWNS_DNA[@]/${FILE//_R1_/_R2_}}")
+                        else
+                            echo "Cannot find matched read for $FILE"
+                            exit
+                        fi
+                        ln -fs ${FIND_FILE} SAMPLE${TESTn}_DNA_${FILE};
+                        ln -fs ${FIND_FILE//_R1_/_R2_} SAMPLE${TESTn}_DNA_${FILE//_R1_/_R2_};
+                        SNAMES+=" SAMPLE${TESTn}_DNA_${FILE%%_*}"
+                        ANAMES+=" $PROJ_DIR/input_fastqs/SAMPLE${TESTn}_DNA_${FILE} $PROJ_DIR/input_fastqs/SAMPLE${TESTn}_DNA_${FILE//_R1_/_R2_}";
+                    fi
+                fi
+            done
+            for LINK in ${UNKNOWNS_RNA[@]}; do
+                if [[ "$FILE" = "$LINK" ]]; then
+                    if [[ "$FILE" =~ .*_R1_.*\.fastq* ]]; then
+                        if [[ "${UNKNOWNS_RNA[*]}" =~ "${FILE//_R1_/_R2_}" ]]; then
+                            UNKNOWNS_RNA=("${UNKNOWNS_RNA[@]/${FILE}}")
+                            UNKNOWNS_RNA=("${UNKNOWNS_RNA[@]/${FILE//_R1_/_R2_}}")
+                        else
+                            echo "Cannot find matched read for $FILE"
+                            exit
+                        fi
+                        ln -fs ${FIND_FILE} SAMPLE${TESTn}_RNA_${FILE};
+                        ln -fs ${FIND_FILE//_R1_/_R2_} SAMPLE${TESTn}_RNA_${FILE//_R1_/_R2_};
+                        SNAMES+=" SAMPLE${TESTn}_RNA_${FILE%%_*}"
+                        ANAMES+=" $PROJ_DIR/input_fastqs/SAMPLE${TESTn}_RNA_${FILE} $PROJ_DIR/input_fastqs/SAMPLE${TESTn}_RNA_${FILE//_R1_/_R2_}";
+                    fi
+                fi
+            done
+        fi
+    done
+
+    for LINK in ${POSITIVE[@]}; do
+        if [[ "$FILE" = "$LINK" ]]; then
+            echo "Need to update to parse DNA/RNA positive controls"
+            exit
+            if [[ "$FILE" =~ .*_R1_.*\.fastq* ]]; then
+                if [[ "${POSITIVE[*]}" =~ "${FILE//_R1_/_R2_}" ]]; then
+                    POSITIVE=("${POSITIVE[@]/${FILE}}")
+                    POSITIVE=("${POSITIVE[@]/${FILE//_R1_/_R2_}}")
+                else
+                    echo "Cannot find matched read for $FILE"
+                    exit
+                fi
+            fi
+            POSn=$((POSn + 1))
+            ln -fs ${FIND_FILE} POS${POSn}_${FILE};
+            ln -fs ${FIND_FILE//_R1_/_R2_} POS${POSn}_${FILE//_R1_/_R2_};
+       	    PNAMES+=" POSITIVE${POSn}_${FILE%%_*}"
+       	    SNAMES+=" POSITIVE${POSn}_${FILE%%_*}"
+            ANAMES+=" $PROJ_DIR/input_fastqs/POS${POSn}_${FILE} $PROJ_DIR/input_fastqs/POS${POSn}_${FILE//_R1_/_R2_}";
+        fi
+    done
+
+    for FLINK in ${NEGATIVE_DNA[@]} ${NEGATIVE_RNA[@]}; do
+        if [[ "$FILE" = "$FLINK" ]]; then
+            NEGn=$((NEGn + 1))
+            for LINK in ${NEGATIVE_DNA[@]}; do
+                if [[ "$FILE" = "$LINK" ]]; then
+                    if [[ "$FILE" =~ .*_R1_.*\.fastq* ]]; then
+                        if [[ "${NEGATIVE_DNA[*]}" =~ "${FILE//_R1_/_R2_}" ]]; then
+                            NEGATIVE_DNA=("${NEGATIVE_DNA[@]/${FILE}}")
+                            NEGATIVE_DNA=("${NEGATIVE_DNA[@]/${FILE//_R1_/_R2_}}")
+                        else
+                            echo "Cannot find matched read for $FILE"
+                            exit
+                        fi
+                        ln -fs ${FIND_FILE} NEG${NEGn}_DNA_${FILE};
+                        ln -fs ${FIND_FILE//_R1_/_R2_} NEG${NEGn}_DNA_${FILE//_R1_/_R2_};
+       	                NNAMES+=" NEGATIVE${NEGn}_DNA_${FILE%%_*}"
+       	                SNAMES+=" NEGATIVE${NEGn}_DNA_${FILE%%_*}"
+                        ANAMES+=" $PROJ_DIR/input_fastqs/NEG${NEGn}_DNA_${FILE} $PROJ_DIR/input_fastqs/NEG${NEGn}_DNA_${FILE//_R1_/_R2_}";
+                    fi
+                fi
+            done
+            for LINK in ${NEGATIVE_RNA[@]}; do
+                if [[ "$FILE" = "$LINK" ]]; then
+                    if [[ "$FILE" =~ .*_R1_.*\.fastq* ]]; then
+                        if [[ "${NEGATIVE_RNA[*]}" =~ "${FILE//_R1_/_R2_}" ]]; then
+                            NEGATIVE_RNA=("${NEGATIVE_RNA[@]/${FILE}}")
+                            NEGATIVE_RNA=("${NEGATIVE_RNA[@]/${FILE//_R1_/_R2_}}")
+                        else
+                            echo "Cannot find matched read for $FILE"
+                            exit
+                        fi
+                        ln -fs ${FIND_FILE} NEG${NEGn}_RNA_${FILE};
+                        ln -fs ${FIND_FILE//_R1_/_R2_} NEG${NEGn}_RNA_${FILE//_R1_/_R2_};
+       	                NNAMES+=" NEGATIVE${NEGn}_RNA_${FILE%%_*}"
+       	                SNAMES+=" NEGATIVE${NEGn}_RNA_${FILE%%_*}"
+                        ANAMES+=" $PROJ_DIR/input_fastqs/NEG${NEGn}_RNA_${FILE} $PROJ_DIR/input_fastqs/NEG${NEGn}_RNA_${FILE//_R1_/_R2_}";
+                    fi
+                fi
+            done
+        fi
+    done
+done
+
+# Rename any files that have spaces -- change to underscores
+#find -L . -type f -name "* *" | while read file; do mv "$file" "${file// /_}"; done
+
+# ---------------------------------------------------------------------
+# Run pipeline
+# ---------------------------------------------------------------------
+
+
+mkdir -p $PROJ_DIR/shotmeta
+cd $PROJ_DIR/shotmeta
+
+export MODULEPATH=/home/lmnp/knut0297/software/modulesfiles:$MODULEPATH
+#module load shotmeta/1.2
+module load krona
+
+#removed because it will rewrite names.dmp and nodes.dmp from kaiju db.tgz
+#updateTaxonomy.sh $SHOTMETA_DB
+#echo ""
+#echo "/home/thyagara/csf_mNGS/shotmeta/shotmeta_v1.6 -m ${KV} -d ${SHOTMETA_DB}"
+#echo "" 
+#echo "-s "$SNAMES
+#echo ""
+#echo " -n "$NNAMES
+#echo ""
+#echo $ANAMES
+#echo ""
+#echo $NODE
+#echo ""
+#echo ""
+
+# Test it
+# shotmeta -t -u -d ${SHOTMETA_DB} $(find $PROJ_DIR/input_fastqs/*.fastq*)
+
+# Run it
+#    /home/thyagara/victo160/csf_mNGS/shotmeta/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} $(find $PROJ_DIR/input_fastqs/*.fastq*)
+if [[ $POSn && $NEGn ]]; then
+    /home/thyagara/victo160/csf_mNGS/shotmeta/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" -p "$PNAMES" -n "$NNAMES" $ANAMES
+elif [[ $POSn && !$NEGn ]]; then
+    /home/thyagara/victo160/csf_mNGS/shotmeta/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" -p "$PNAMES" $ANAMES
+elif [[ !POSn && $NEGn ]]; then
+    if [[ "$NEGATIVE_DIR" == "" ]]; then
+        echo "running original pre 1.9 pipeline."
+        /home/thyagara/victo160/csf_mNGS/shotmeta/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" -n "$NNAMES" $ANAMES
+    else
+        for name in $(echo $NNAMES | tr " " "\n"); do
+            while [[ ! -f ${NEGATIVE_DIR}/shotmeta/samples/${name}/06_kraken/kraken.good.parsed ]] && [[ ! -f ${NEGATIVE_DIR}/shotmeta/samples/${name}/06_kaiju/kaiju.loose ]]; do
+                echo "Waiting five more minutes for negative controls to be processed";
+                sleep 300;
+            done
+            mkdir $PROJ_DIR/shotmeta/samples/ 2>/dev/null
+            ln -fs ${NEGATIVE_DIR}/shotmeta/samples/${name} $PROJ_DIR/shotmeta/samples/${name};
+        done
+        echo "Running shotmeta without repeating negative controls"
+        /home/thyagara/victo160/csf_mNGS/shotmeta/shotmeta_v2 -i -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" -n "$NNAMES" $ANAMES
+    fi
+else
+    /home/thyagara/victo160/csf_mNGS/shotmeta/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" $ANAMES
+fi
+
+# ---------------------------------------------------------------------
+# Job summary info
+# ---------------------------------------------------------------------
+
+echo "["$(date)"] Script end."
+
+if [ ! -z ${PBS_JOBID+x} ]; then
+    qstat -f $PBS_JOBID
+fi
