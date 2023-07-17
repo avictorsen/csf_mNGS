@@ -572,21 +572,21 @@ White='\033[0;37m'        # White
 
 # NEEDS UPDATING
 # Kraken variable
-#export KRAKEN_DB=${SHOTMETA_DB}/kraken
+#export KRAKEN_DB=${SHOTMETA_DB}/db/kraken
 if [ ${KRAKEN_VER} -eq 1 ]; then
-    export KRAKEN_DB=${SHOTMETA_DB}/kraken
+    export KRAKEN_DB=${SHOTMETA_DB}/db/kraken
 elif [ ${KRAKEN_VER} -eq 2 ]; then
-    export KRAKEN_DB=${SHOTMETA_DB}/kraken2
+    export KRAKEN_DB=${SHOTMETA_DB}/db/kraken2
 fi
 
 
 # Kaiju variables.
-export NODES=${SHOTMETA_DB}/kaiju_all_riboviria/nodes.dmp
-export NAMES=${SHOTMETA_DB}/kaiju_all_riboviria/names.dmp
-export FMI=${SHOTMETA_DB}/kaiju_all_riboviria/kaiju_db_viruses.fmi
+export NODES=${SHOTMETA_DB}/db/kaiju_all_riboviria/nodes.dmp
+export NAMES=${SHOTMETA_DB}/db/kaiju_all_riboviria/names.dmp
+export FMI=${SHOTMETA_DB}/db/kaiju_all_riboviria/kaiju_db_viruses.fmi
 
 # Krona variable
-export TAXONOMY=${SHOTMETA_DB}/krona
+export TAXONOMY=${SHOTMETA_DB}/db/krona
 
 # GNU parallel varaibles
 export PARALLEL="--workdir . --env PATH --env LD_LIBRARY_PATH --env LOADEDMODULES --env _LMFILES_ --env MODULE_VERSION --env MODULEPATH --env MODULEVERSION_STACK --env MODULESHOME --env OMP_DYNAMICS --env OMP_MAX_ACTIVE_LEVELS --env OMP_NESTED --env OMP_NUM_THREADS --env OMP_SCHEDULE --env OMP_STACKSIZE --env OMP_THREAD_LIMIT --env OMP_WAIT_POLICY"
@@ -832,7 +832,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
 
 
         echo -e "${Blue}Aligning to human genome${Color_Off}"
-        bwa mem -B 0 -t $THREADS ${SHOTMETA_DB}/hg38/hg38.fa $R1 $R2 > Human_aligned.sam
+        bwa mem -B 0 -t $THREADS ${SHOTMETA_DB}/db//hg38/hg38.fa $R1 $R2 > Human_aligned.sam
         echo -e "${Purple}converting to original alignment to bam${Color_Off}";
         samtools view -bh -@ $THREADS Human_aligned.sam > Human_aligned.bam
 
@@ -848,7 +848,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         fi
         split -n l/$THREADS Human_alignments.sam temp_sam.
         for file in temp_sam.*; do
-            echo "perl /home/thyagara/victo160/csf_mNGS/shotmeta/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
+            echo "perl ${SHOTMETA_DB}/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
         done
         parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt 
         if [ -f temp.bad.sam ]; then rm temp.bad.sam; fi
@@ -874,7 +874,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         #split -l 400000 ../03_prinseq/prinseq_good_out_R2.fastq original_R2.temp.
         #/home/thyagara/victo160/compare_fastq-big.pl no_human_R1.fastq no_human_R2.fastq
         #rm original_R[12].temp.*
-        /home/thyagara/victo160/csf_mNGS/shotmeta/compare_fastq.pl no_human_R1.fastq no_human_R2.fastq ../03_prinseq/prinseq_good_out_R1.fastq ../03_prinseq/prinseq_good_out_R2.fastq
+        ${SHOTMETA_DB}/compare_fastq.pl no_human_R1.fastq no_human_R2.fastq ../03_prinseq/prinseq_good_out_R1.fastq ../03_prinseq/prinseq_good_out_R2.fastq
         mv R1_new.fastq no_human_R1.fastq
         mv R2_new.fastq no_human_R2.fastq
 
@@ -899,7 +899,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
 
         if [[ "${SAMPLE_DNA_OR_RNA[$i]}" == "RNA" ]]; then
             echo -e "${Blue}Aligning to human mRNA${Color_Off}"
-            bwa mem -B 0 -t $THREADS ${SHOTMETA_DB}/hg38/hg38.mRNA.fa no_human_R1.fastq no_human_R2.fastq > Human_mRNA_aligned.sam
+            bwa mem -B 0 -t $THREADS ${SHOTMETA_DB}/db/hg38/hg38.mRNA.fa no_human_R1.fastq no_human_R2.fastq > Human_mRNA_aligned.sam
             if [[ "$?" == "1" ]]; then exit 204; fi
 
 
@@ -913,7 +913,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
             fi
             split -n l/$THREADS Human_mRNA_alignments.sam temp_sam.
             for file in temp_sam.*; do
-                echo "perl /home/thyagara/victo160/csf_mNGS/shotmeta/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
+                echo "perl ${SHOTMETA_DB}/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
             done
             parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt 
             if [ -f temp.bad.sam ]; then rm temp.bad.sam; fi
@@ -935,7 +935,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
             cat temp_R1.fastq >> no_human_mRNA_R1.fastq; rm temp_R1.fastq
             cat temp_R2.fastq >> no_human_mRNA_R2.fastq; rm temp_R2.fastq
 
-            /home/thyagara/victo160/csf_mNGS/shotmeta/compare_fastq.pl no_human_mRNA_R1.fastq no_human_mRNA_R2.fastq ../03_prinseq/prinseq_good_out_R1.fastq ../03_prinseq/prinseq_good_out_R2.fastq
+            ${SHOTMETA_DB}/compare_fastq.pl no_human_mRNA_R1.fastq no_human_mRNA_R2.fastq ../03_prinseq/prinseq_good_out_R1.fastq ../03_prinseq/prinseq_good_out_R2.fastq
             mv R1_new.fastq no_human_R1.fastq
             mv R2_new.fastq no_human_R2.fastq
             rm no_human_mRNA_R[12].fastq
@@ -963,7 +963,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
 
 
         echo -e "${Blue}Aligning to lambda phage${Color_Off}"
-        bwa mem -a -B 0 -t $THREADS ${SHOTMETA_DB}/lambda/lambda.fa no_human_R1.fastq no_human_R2.fastq > lambda_aligned.sam
+        bwa mem -a -B 0 -t $THREADS ${SHOTMETA_DB}/db/lambda/lambda.fa no_human_R1.fastq no_human_R2.fastq > lambda_aligned.sam
         if [[ "$?" == "1" ]]; then exit 205; fi
 
 
@@ -977,7 +977,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         fi
         split -n l/$THREADS lambda_alignments.sam temp_sam.
         for file in temp_sam.*; do
-            echo "perl /home/thyagara/victo160/csf_mNGS/shotmeta/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
+            echo "perl ${SHOTMETA_DB}/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
         done
         parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt 
         if [ -f temp.sam ]; then 
@@ -999,7 +999,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         samtools view -b -@ $THREADS temp.bad.sam | samtools fastq -@ $THREADS -1 temp_R1.fastq -2 temp_R2.fastq 2>/dev/null
         cat temp_R1.fastq >> no_lambda_R1.fastq; rm temp_R1.fastq
         cat temp_R2.fastq >> no_lambda_R2.fastq; rm temp_R2.fastq
-        /home/thyagara/victo160/csf_mNGS/shotmeta/compare_fastq.pl no_lambda_R1.fastq no_lambda_R2.fastq no_human_R1.fastq no_human_R2.fastq 
+        ${SHOTMETA_DB}/compare_fastq.pl no_lambda_R1.fastq no_lambda_R2.fastq no_human_R1.fastq no_human_R2.fastq 
         mv R1_new.fastq no_lambda_R1.fastq
         mv R2_new.fastq no_lambda_R2.fastq
 
@@ -1035,7 +1035,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
 
 
         echo -e "${Blue}Aligning to MS2 RNA${Color_Off}"
-        bwa mem -a -B 0 -t $THREADS ${SHOTMETA_DB}/MS2/MS2.fa no_lambda_R1.fastq no_lambda_R2.fastq > MS2_aligned.sam
+        bwa mem -a -B 0 -t $THREADS ${SHOTMETA_DB}/db/MS2/MS2.fa no_lambda_R1.fastq no_lambda_R2.fastq > MS2_aligned.sam
 
 
         echo -e "${Purple}removing unmapped reads${Color_Off}";
@@ -1049,7 +1049,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         fi
         split -n l/$THREADS MS2_alignments.sam temp_sam.
         for file in temp_sam.*; do
-            echo "perl /home/thyagara/victo160/csf_mNGS/shotmeta/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
+            echo "perl ${SHOTMETA_DB}/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
         done
         parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt 
         if [ -f temp.sam ]; then 
@@ -1071,7 +1071,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         samtools view -b -@ $THREADS temp.bad.sam | samtools fastq -@ $THREADS -1 temp_R1.fastq -2 temp_R2.fastq 2>/dev/null
         cat temp_R1.fastq >> extra_R1.fastq; rm temp_R1.fastq
         cat temp_R2.fastq >> extra_R2.fastq; rm temp_R2.fastq
-        /home/thyagara/victo160/csf_mNGS/shotmeta/compare_fastq.pl extra_R1.fastq extra_R2.fastq no_lambda_R1.fastq no_lambda_R2.fastq 
+        ${SHOTMETA_DB}/compare_fastq.pl extra_R1.fastq extra_R2.fastq no_lambda_R1.fastq no_lambda_R2.fastq 
         mv R1_new.fastq extra_R1.fastq
         mv R2_new.fastq extra_R2.fastq
 
@@ -1245,12 +1245,12 @@ for i in "${!SAMPLE_NAME[@]}"; do
             # generate kaiju.report
             /home/thyagara/victo160/csf_mNGS/kaiju/bin/kaiju-addTaxonNames -n $NAMES -t $NODES -o kaiju.strict.report -i kaiju.strict.hits
 
-            /home/thyagara/victo160/csf_mNGS/shotmeta/kaiju_pull_fastq.pl kaiju.strict.report $R1 $R2 | sort -nk3 > kaiju.strict.reads
+            ${SHOTMETA_DB}/kaiju_pull_fastq.pl kaiju.strict.report $R1 $R2 | sort -nk3 > kaiju.strict.reads
 
             if [[ "${SAMPLE_NAME[$i]}" =~ "NEGATIVE" ]]; then
                 :
             else
-                /home/thyagara/victo160/csf_mNGS/shotmeta/remove.control.kaiju.pl $PROJ_DIR/samples/${RNA_NEG_NAME}/06_kaiju/kaiju.strict.hits kaiju.strict.hits 
+                ${SHOTMETA_DB}/remove.control.kaiju.pl $PROJ_DIR/samples/${RNA_NEG_NAME}/06_kaiju/kaiju.strict.hits kaiju.strict.hits 
                 /home/thyagara/victo160/csf_mNGS/kaiju/bin/kaiju-addTaxonNames -n $NAMES -t $NODES -o kaiju.strict.hits.subtracted.report -i kaiju.strict.hits.subtracted
             fi
 
@@ -1347,7 +1347,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
             #for i in "${!SAMPLE_NAME[@]}"; do
                 # echo out a command to be run with parallel.
                 echo ${SAMPLE_NAME[$i]}
-                echo "perl /home/thyagara/victo160/csf_mNGS/shotmeta/parse.kraken.pl $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/06_kraken/kraken" >> $PROJ_DIR/logs/parallel_commands_kraken_filter.txt
+                echo "perl ${SHOTMETA_DB}/parse.kraken.pl $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/06_kraken/kraken" >> $PROJ_DIR/logs/parallel_commands_kraken_filter.txt
             #done
         fi
     fi
@@ -1414,7 +1414,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
             #for i in "${!SAMPLE_NAME[@]}"; do
                 # echo out a command to be run with parallel.
                 echo ${SAMPLE_NAME[$i]}
-                echo "perl /home/thyagara/victo160/csf_mNGS/shotmeta/reparse.kraken.pl $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/06_kraken/kraken.good.parsed" >> $PROJ_DIR/logs/parallel_commands_kraken_filter.txt
+                echo "perl ${SHOTMETA_DB}/reparse.kraken.pl ${SHOTMETA_DB}/kraken.thresholds.txt $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/06_kraken/kraken.good.parsed" >> $PROJ_DIR/logs/parallel_commands_kraken_filter.txt
             #done
         fi
     fi
@@ -1486,7 +1486,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
                     if [ -f ${BASE}/${DNA_NEG_NAME}/06_kraken/kraken.good.parsed ]; then
                         echo -e "${Blue}Compairing (DNA) ${SAMPLE_NAME[$i]} to ${DNA_NEG_NAME}${Color_Off}"
                         # echo out a command to be run with parallel.
-                        echo "perl /home/thyagara/victo160/csf_mNGS/remove.control.kraken.pl ${BASE}/${DNA_NEG_NAME}/06_kraken/kraken.good.parsed ${BASE}/${SAMPLE_NAME[$i]}/06_kraken/kraken.good.parsed.thresholded" >> $PROJ_DIR/logs/parallel_commands_kraken_filter.txt
+                        echo "perl ${SHOTMETA_DB}/remove.control.kraken.pl ${BASE}/${DNA_NEG_NAME}/06_kraken/kraken.good.parsed ${BASE}/${SAMPLE_NAME[$i]}/06_kraken/kraken.good.parsed.thresholded" >> $PROJ_DIR/logs/parallel_commands_kraken_filter.txt
                     else
                         echo -e "Subtraction was not run.  Couldn't locate Input";
                     fi
@@ -1634,10 +1634,10 @@ for i in "${!SAMPLE_NAME[@]}"; do
             :
         else
             if [[ "${SAMPLE_NAME[$i]}" =~ "_DNA_" ]]; then
-                /home/thyagara/victo160/csf_mNGS/shotmeta/generate_report_kraken.pl $PROJ_DIR ${SAMPLE_NAME[$i]}
-                /home/thyagara/victo160/csf_mNGS/shotmeta/generate_report_stddev.pl $PROJ_DIR ${SAMPLE_NAME[$i]}
+                ${SHOTMETA_DB}/generate_report_kraken.pl $PROJ_DIR ${SAMPLE_NAME[$i]} ${SHOTMETA_DB}
+                ${SHOTMETA_DB}/generate_report_stddev.pl $PROJ_DIR ${SAMPLE_NAME[$i]} ${SHOTMETA_DB}
             elif [[ "${SAMPLE_NAME[$i]}" =~ "_RNA_" ]]; then
-                /home/thyagara/victo160/csf_mNGS/shotmeta/generate_report_kaiju.pl $PROJ_DIR ${SAMPLE_NAME[$i]}
+                ${SHOTMETA_DB}/generate_report_kaiju.pl $PROJ_DIR ${SAMPLE_NAME[$i]}
             fi
         fi
 done

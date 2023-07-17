@@ -2,6 +2,8 @@
 use strict;
 use warnings;
 
+## this should pull fastq files from a kraken file
+
 unless (@ARGV > 2){
 	die "not enough";
 }

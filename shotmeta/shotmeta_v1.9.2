@@ -869,7 +869,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         fi
         split -n l/$THREADS Human_alignments.sam temp_sam.
         for file in temp_sam.*; do
-            echo "perl /home/thyagara/victo160/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
+            echo "perl /home/thyagara/victo160/csf_mNGS/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
         done
         parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt 
         if [ -f temp.bad.sam ]; then rm temp.bad.sam; fi
@@ -934,7 +934,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
             fi
             split -n l/$THREADS Human_mRNA_alignments.sam temp_sam.
             for file in temp_sam.*; do
-                echo "perl /home/thyagara/victo160/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
+                echo "perl /home/thyagara/victo160/csf_mNGS/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
             done
             parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt 
             if [ -f temp.bad.sam ]; then rm temp.bad.sam; fi
@@ -998,7 +998,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         fi
         split -n l/$THREADS lambda_alignments.sam temp_sam.
         for file in temp_sam.*; do
-            echo "perl /home/thyagara/victo160/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
+            echo "perl /home/thyagara/victo160/csf_mNGS/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
         done
         parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt 
         if [ -f temp.sam ]; then 
@@ -1070,7 +1070,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         fi
         split -n l/$THREADS MS2_alignments.sam temp_sam.
         for file in temp_sam.*; do
-            echo "perl /home/thyagara/victo160/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
+            echo "perl /home/thyagara/victo160/csf_mNGS/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
         done
         parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt 
         if [ -f temp.sam ]; then 

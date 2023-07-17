@@ -9,6 +9,7 @@ unless (@ARGV > 1){
 print "RUNNING STDDEV TEST\n";
 print "1st argument: $ARGV[0]\n";
 print "2nd argument: $ARGV[1]\n";
+print "3rd argument: $ARGV[2]\n";
 
 open (TRC, "<",$ARGV[0]."/samples/".$ARGV[1]."/01_fastqc_original/Total_read_count.txt") or die "Cannot open file 1";
 my $trc = <TRC>;
@@ -57,7 +58,7 @@ while ($unq =~ s/(.*\d)(\d\d\d)/$1\,$2/g){};
 close UNQ;
 
 
-open (RAW, "< /home/thyagara/victo160/csf_mNGS/kraken.thresholds.txt") or die "Cannot open file 6";
+open (RAW, "< ".$ARGV[2]."/kraken.thresholds.txt") or die "Cannot open file 6";
 my %raw;
 while (<RAW>){
 	chomp;
@@ -66,7 +67,7 @@ while (<RAW>){
 }
 close RAW;
 
-open (THRESH1, "< /home/thyagara/victo160/csf_mNGS/RPKR.thresholds.txt") or die "Cannot open file 6.5";
+open (THRESH1, "< ".$ARGV[2]."/RPKR.thresholds.txt") or die "Cannot open file 6.5";
 my %thres;
 while (<THRESH1>){
 	chomp;
@@ -75,7 +76,7 @@ while (<THRESH1>){
 }
 close THRESH1;
 
-open (THRESH2, "< /home/thyagara/victo160/csf_mNGS/RPKR.stddev.thresholds.txt") or die "Cannot open file 6.5";
+open (THRESH2, "< ".$ARGV[2]."/RPKR.stddev.thresholds.txt") or die "Cannot open file 6.5";
 my %hold;
 while (<THRESH2>){
 	chomp;

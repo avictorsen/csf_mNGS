@@ -55,8 +55,8 @@ NEGATIVE_RNA=(
 POSITIVE=(
 )
 
-# location of database kraken, bracken, etc databases
-SHOTMETA_DB=/home/thyagara/victo160/csf_mNGS/shotmeta/db
+# location of database directory containing kraken, kaiju, krona, etc databases
+SHOTMETA_DB=/home/thyagara/victo160/csf_mNGS/shotmeta
 
 # Kraken version 1 or 2
 KV=2
@@ -238,15 +238,15 @@ module load krona
 # shotmeta -t -u -d ${SHOTMETA_DB} $(find $PROJ_DIR/input_fastqs/*.fastq*)
 
 # Run it
-#    /home/thyagara/victo160/csf_mNGS/shotmeta/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} $(find $PROJ_DIR/input_fastqs/*.fastq*)
+#    ${SHOTMETA_DB}/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} $(find $PROJ_DIR/input_fastqs/*.fastq*)
 if [[ $POSn && $NEGn ]]; then
-    /home/thyagara/victo160/csf_mNGS/shotmeta/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" -p "$PNAMES" -n "$NNAMES" $ANAMES
+    ${SHOTMETA_DB}/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" -p "$PNAMES" -n "$NNAMES" $ANAMES
 elif [[ $POSn && !$NEGn ]]; then
-    /home/thyagara/victo160/csf_mNGS/shotmeta/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" -p "$PNAMES" $ANAMES
+    ${SHOTMETA_DB}/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" -p "$PNAMES" $ANAMES
 elif [[ !POSn && $NEGn ]]; then
     if [[ "$NEGATIVE_DIR" == "" ]]; then
         echo "running original pre 1.9 pipeline."
-        /home/thyagara/victo160/csf_mNGS/shotmeta/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" -n "$NNAMES" $ANAMES
+        ${SHOTMETA_DB}/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" -n "$NNAMES" $ANAMES
     else
         for name in $(echo $NNAMES | tr " " "\n"); do
             while [[ ! -f ${NEGATIVE_DIR}/shotmeta/samples/${name}/06_kraken/kraken.good.parsed ]] && [[ ! -f ${NEGATIVE_DIR}/shotmeta/samples/${name}/06_kaiju/kaiju.loose ]]; do
@@ -257,10 +257,10 @@ elif [[ !POSn && $NEGn ]]; then
             ln -fs ${NEGATIVE_DIR}/shotmeta/samples/${name} $PROJ_DIR/shotmeta/samples/${name};
         done
         echo "Running shotmeta without repeating negative controls"
-        /home/thyagara/victo160/csf_mNGS/shotmeta/shotmeta_v2 -i -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" -n "$NNAMES" $ANAMES
+        ${SHOTMETA_DB}/shotmeta_v2 -i -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" -n "$NNAMES" $ANAMES
     fi
 else
-    /home/thyagara/victo160/csf_mNGS/shotmeta/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" $ANAMES
+    ${SHOTMETA_DB}/shotmeta_v2 -c ${NODE} -m ${KV} -d ${SHOTMETA_DB} -s "$SNAMES" $ANAMES
 fi
 
 # ---------------------------------------------------------------------
