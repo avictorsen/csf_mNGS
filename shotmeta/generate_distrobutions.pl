@@ -11,8 +11,8 @@ unless (@ARGV > 0){
 }
 #print "1st: $ARGV[0]\n";
 
-if ( -e "RPKR.stddev.FCID.txt" or -e "RPKR.stddev.values.json" or -e "RPKR.stddev.thresholds.txt" ){
-	print "RPKR output files already exist! Please rename these before proceeding.\n";
+if ( -e "RPKR.stddev.thresholds.txt" ){
+	print "RPKR.stddev.thresholds.txt already exists! Please rename it before rerunning.\n";
 	exit;
 }
 
