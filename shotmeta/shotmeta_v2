@@ -708,7 +708,7 @@ done
 
 
 # ---------------------------------------------------------------------
-# Use prinseq to remove poly-N sequences
+# Use prinseq++ to remove poly-N sequences
 # ---------------------------------------------------------------------
 # prinseq-lite.pl script is not parallelized, so use GNU parallel
 echo ""
@@ -793,7 +793,7 @@ module purge
 module load bwa
 module load samtools
 module load parallel
-module load prinseq/0.20.4
+#module load prinseq/0.20.4
 module load pigz
 
 echo $(which bwa) >> $PROJ_DIR/logs/software_versions.txt
