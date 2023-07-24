@@ -99,7 +99,8 @@ for (my $i=0; $i < (scalar @INPUT_LIST); $i++){
 	#Read final output files to know which organisms to remove
 	my $OPF=$INPUT_LIST[$i];
 	chomp $OPF;
-	$OPF =~ s/\/05_prinseq\/Unique_read_count.txt/.output.txt/;
+	#$OPF =~ s/\/05_prinseq\/Unique_read_count.txt/.output.txt/;
+	$OPF =~ s/\/05_prinseq\/Unique_read_count.txt/.STD.output.txt/;
 	$OPF =~ s/\/samples//;
 	my $OPFH="OPFH-".$i;
 
@@ -109,20 +110,28 @@ for (my $i=0; $i < (scalar @INPUT_LIST); $i++){
 		my $read=0;
 		while (<$OPFH>){
 			chomp;
-			if ($_ =~ "Organisms above kingdom threashold,"){
+
+			# reset reading status if last category.
+			if ($_ =~ "rganisms above kingdom threashold,"){ #only trigers if no positive category. 
 				$read=0;
 			}
 			if ( $read == 1 ){
 				if ($_ eq ""){
+					next;
+				}elsif ($_ =~ "rganisms with unknown RPKM"){
+					next;
+				}elsif ($_ =~ "rganisms above kingdom threshold"){
 					$read=0;
 				}else{
-					$_ =~ s/^\s+//;
-					$_ =~ /(.+):/;
+					$_ =~ s/^\s+//; #remove inital whitespaces
+					$_ =~ /(.+):/; #select anything before a colon
 					print "  Positive for $1\n";
 					push (@org_skip, $1);
 				}
 			}
-			if ($_ =~ "Organisms above species specific threashold,"){
+			# if category reached 
+			#if ($_ =~ "Organisms above species specific threashold,"){ #for original output.txt files
+			if ($_ =~ "Organisms with RPKM"){
 				$read=1;
 			}
 		}
