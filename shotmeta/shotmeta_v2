@@ -19,16 +19,16 @@
 # Introduction
 #######################################################################
 # "shotmeta" is the name of this script. It stands for shotgun metagenomics.
-# The purpose of this pipeline script is to use many software tools for the 
-# analysis of shotgun metagenomics short read sequencing data for rapid 
+# The purpose of this pipeline script is to use many software tools for the
+# analysis of shotgun metagenomics short read sequencing data for rapid
 # taxonimic classification.
 #
 # It was developed by Todd Knutson (knut0297@umn.edu) and supported by
-# the University of Minnesota Supercomputing Institute and the Dept. of 
+# the University of Minnesota Supercomputing Institute and the Dept. of
 # Laboratory Medicine and Pathology.
 #
 # Acknowledgments: Christine Henzler, Sophie Arbefeville, and Bharat Thyagarajan
-# provided much assistance. 
+# provided much assistance.
 #
 # Development started: Oct 2017
 
@@ -115,8 +115,6 @@ OPTIONS:
 -i <flag>	Dont reprocess controls.
 -d <dir path>   Path to directory containing databases (kraken, kaiju, taxonomy, etc.).
                 [Default: ${SHOTMETA_DB}]
--k <string>     Length of k-mer distrobution to use, ie read-length
-                [Default: ${K_MER}]
 -m <int>        Kraken version to use (1|2)
 		[Default: ${KRAKEN_VER}]
 -r <int>        Minimum ratio (sample/neg_control) of classified reads to be called a hit.
@@ -135,11 +133,11 @@ fi
 #######################################################################
 # TESTING
 #######################################################################
-# 
-# 
-# 
-# 
-# 
+#
+#
+#
+#
+#
 #######################################################################
 # TESTING END
 #######################################################################
@@ -153,10 +151,9 @@ while getopts "tuis:p:n:d:r:k:m:c:" opt; do
         p)  POS_NAME_STRING="$OPTARG" ;;
         n)  NEG_NAME_STRING="$OPTARG" ;;
         d)  SHOTMETA_DB="$OPTARG" ;;
-        r)  MIN_RATIO="$OPTARG" ;; 
+        r)  MIN_RATIO="$OPTARG" ;;
         m)  KRAKEN_VER="$OPTARG" ;;
-        k)  K_MER="$OPTARG" ;;
-        c)  NODES="$OPTARG" ;; 
+        c)  NODES="$OPTARG" ;;
         :)  echo "Error: option ${OPTARG} requires an argument"; exit 64 ;;
         ?)  echo "Invalid option: ${OPTARG}"; exit 64 ;;
     esac
@@ -186,11 +183,11 @@ echo $FASTQ_FILES_READLINK
 # Convert space-delimited strings to bash arrays
 for names in $SAMPLE_NAME_STRING;do
     SAMPLE_NAME+=("$names")
-done  
+done
 
 for pos in $POS_NAME_STRING;do
     POS_NAME+=("$pos")
-done  
+done
 
 for neg in $NEG_NAME_STRING;do
     NEG_NAME+=("$neg")
@@ -243,7 +240,7 @@ else
 fi
 
 SAMPLE_NAME_LENGTH=${#SAMPLE_NAME[@]}
-SAMPLE_NAME_LENGTH_DOUBLE=$((SAMPLE_NAME_LENGTH*2 | bc)) 
+SAMPLE_NAME_LENGTH_DOUBLE=$((SAMPLE_NAME_LENGTH*2 | bc))
 
 # ---------------------------------------------------------------------
 # Check to see if length of names is zero
@@ -252,21 +249,21 @@ if [ ${SAMPLE_NAME_LENGTH} -eq 0 ];then
     # There are zero sample names provided on the command line. Therefore, extract samplenames from the filenames.
     SAMPLE_NAME=()
     for s in "${!FASTQ_FILES_INPUT[@]}"; do
-        
-        BASENAME=$(basename ${FASTQ_FILES_INPUT[$s]})
+
+	BASENAME=$(basename ${FASTQ_FILES_INPUT[$s]})
         SHORTNAME=$(echo $BASENAME | sed -e "s/_S[0-9]\{1,3\}_R[12]_001\.fastq.*\|_S[0-9]\{1,3\}_L[0-9]\{3\}_R[12]_001\.fastq.*\|[Rr][12]\.fastq.*//g");
 
         # Collect sample name for each read (R1 and R2)
         SAMPLE_NAME_ALL+=("$SHORTNAME")
-        
+
         # Create a shorter list of only sample names (one name per pair of reads)
         if (( $(($s % 2 )) == 0 )); then
             SAMPLE_NAME+=("$SHORTNAME")
         fi
-        
+
     done
     SAMPLE_NAME_LENGTH=${#SAMPLE_NAME[@]}
-    SAMPLE_NAME_LENGTH_DOUBLE=$((SAMPLE_NAME_LENGTH*2 | bc)) 
+    SAMPLE_NAME_LENGTH_DOUBLE=$((SAMPLE_NAME_LENGTH*2 | bc))
 else
     :
 fi
@@ -325,7 +322,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         echo "WARNING: Sample '${SAMPLE_NAME[$i]}' will be processed as DNA by default. Sample names should contain DNA or RNA in the name."
         SAMPLE_DNA_OR_RNA+=("DNA")
         #exit 68
-    fi 
+    fi
     # Test whether it's pos/neg/unkn sample type
     if echo "${SAMPLE_NAME[$i]}" | grep -iq "positive"; then
         SAMPLE_TYPE+=("positive_control")
@@ -334,7 +331,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
     else
         # Sample will be processed as unknown by default
         SAMPLE_TYPE+=("unknown_sample")
-    fi 
+    fi
 done
 
 
@@ -372,7 +369,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         if [ $DNA_NEG_COUNTER -gt 1 ]; then
             echo "ERROR. Pipeline exit: Too many DNA negative control samples. Only 1 is allowed."
             exit 69
-        fi    
+        fi
     elif [ $CONCAT == "RNA_positive_control" ]; then
         RNA_POS_COUNTER=$((RNA_POS_COUNTER+1))
         if [ $RNA_POS_COUNTER -gt 1 ]; then
@@ -390,7 +387,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         :
     fi
 done
-    
+
 # ---------------------------------------------------------------------
 # Figure out which samples are the pos/neg controls
 # ---------------------------------------------------------------------
@@ -407,7 +404,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
     else
         # Sample is not a pos/neg control sample
         :
-    fi  
+    fi
 done
 
 echo "---------------------------------------------------------------------"
@@ -417,12 +414,12 @@ echo "$FASTQ_FILES_LENGTH fastq files provided:"
 for i in "${!FASTQ1[@]}"; do
     echo "${FASTQ1[$i]}"
     echo "${FASTQ2[$i]}"
-done  
+done
 echo
 echo "$SAMPLE_NAME_LENGTH sample names provided:"
 for samples in ${SAMPLE_NAME[@]}; do
     echo $samples
-done  
+done
 echo
 
 if [ -z ${DNA_POS_NAME+x} ]; then
@@ -481,7 +478,7 @@ printf "# sample_name\tsample_type\tsample_prep\tread_1\tread_2\n" >> $PROJ_DIR/
 for i in ${!SAMPLE_NAME[@]}; do
     # Print sample name
     printf '%s\t' "${SAMPLE_NAME[$i]}" >> $PROJ_DIR/sample_sheet.txt
-    
+
     # Print sample type (pos/neg/unkn)
     if [ "${SAMPLE_NAME[$i]}" == "${DNA_POS_NAME}" ]; then
         printf '%s\t' "positive_control" >> $PROJ_DIR/sample_sheet.txt
@@ -494,16 +491,16 @@ for i in ${!SAMPLE_NAME[@]}; do
     else
         printf '%s\t' "unknown_sample" >> $PROJ_DIR/sample_sheet.txt
     fi
-    
+
     # Print sample prep (DNA/RNA)
     printf '%s\t' "${SAMPLE_DNA_OR_RNA[$i]}" >> $PROJ_DIR/sample_sheet.txt
-    
+
     # Print fastq file paths (if symlinks, the symlink location is printed)
     printf '%s\t' "${FASTQ1[$i]}" >> $PROJ_DIR/sample_sheet.txt
     printf '%s\t' "${FASTQ2[$i]}" >> $PROJ_DIR/sample_sheet.txt
-    
+
     printf '%s\n' >> $PROJ_DIR/sample_sheet.txt
-done  
+done
 
 
 # ---------------------------------------------------------------------
@@ -535,7 +532,7 @@ fi
 # Software
 #######################################################################
 
-# Prepend Todd's modules files to your MODULEPATH variable, so 
+# Prepend Todd's modules files to your MODULEPATH variable, so
 # those are run when called below
 export MODULEPATH=/home/lmnp/knut0297/software/modulesfiles:$MODULEPATH
 
@@ -610,7 +607,7 @@ export PARALLEL="--workdir . --env PATH --env LD_LIBRARY_PATH --env LOADEDMODULE
 for i in "${!SAMPLE_NAME[@]}"; do
     mkdir -p $PROJ_DIR/samples/${SAMPLE_NAME[$i]} 2>/dev/null
     cd $PROJ_DIR/samples/${SAMPLE_NAME[$i]}
-    
+
     if file --mime-type "${FASTQ1[$i]}" | grep -q gzip$; then
         # file is gzipped
         ln -fs ${FASTQ1[$i]} original_R1.fastq.gz
@@ -631,7 +628,7 @@ done
 #++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Uncomment and delete 'fi #+++end skip' line
 if false; then
-    : 
+    :
 fi
 
 
@@ -694,7 +691,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
     else
         mkdir -p $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/02_trimmomatic
         cd $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/02_trimmomatic
-    
+
         # Take either uncompressed or compressed input fastq -> output uncompressed fastq
         java -Xmx50000M -jar $TRIMMOMATIC/trimmomatic.jar PE -phred33 -threads $THREADS $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/original_R1.fastq* $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/original_R2.fastq* R1.trim.fastq R1.trim.singleton.fastq R2.trim.fastq R2.trim.singleton.fastq ILLUMINACLIP:$TRIMMOMATIC_ADAPTERS_FASTA:2:30:10:1:true LEADING:6 TRAILING:6 SLIDINGWINDOW:6:20 MAXINFO:100:0.8 
 
@@ -710,7 +707,7 @@ done
 # ---------------------------------------------------------------------
 # Use prinseq++ to remove poly-N sequences
 # ---------------------------------------------------------------------
-# prinseq-lite.pl script is not parallelized, so use GNU parallel
+# prinseq-lite.pl script is not parallelized, so use prinseq++
 echo ""
 echo -e "${Red}---------------------------------------------------------------------"
 echo "Running prinseq to remove poly-N sequences"
@@ -832,7 +829,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
 
 
         echo -e "${Blue}Aligning to human genome${Color_Off}"
-        bwa mem -B 0 -t $THREADS ${SHOTMETA_DB}/db//hg38/hg38.fa $R1 $R2 > Human_aligned.sam
+        bwa mem -B 0 -t $THREADS ${SHOTMETA_DB}/db/hg38/hg38.fa $R1 $R2 > Human_aligned.sam
         echo -e "${Purple}converting to original alignment to bam${Color_Off}";
         samtools view -bh -@ $THREADS Human_aligned.sam > Human_aligned.bam
 
@@ -850,7 +847,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         for file in temp_sam.*; do
             echo "perl ${SHOTMETA_DB}/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
         done
-        parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt 
+        parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt
         if [ -f temp.bad.sam ]; then rm temp.bad.sam; fi
         if [ -f temp.good.sam ]; then rm temp.good.sam; fi
         samtools view -H --no-PG Human_aligned.sam > temp.bad.sam
@@ -915,7 +912,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
             for file in temp_sam.*; do
                 echo "perl ${SHOTMETA_DB}/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
             done
-            parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt 
+            parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt
             if [ -f temp.bad.sam ]; then rm temp.bad.sam; fi
             if [ -f temp.good.sam ]; then rm temp.good.sam; fi
             samtools view -H --no-PG Human_mRNA_aligned.sam > temp.bad.sam
@@ -954,7 +951,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
             HUMAN_READ_COUNT=$((HUMAN_MRNA_READ_COUNT + HUMAN_READ_COUNT))
 
 
-            rm Human_mRNA_aligned.sam 
+            rm Human_mRNA_aligned.sam
             rm Human_mRNA_alignments.sam
             rm $PROJ_DIR/logs/parallel_commands_perl.txt
         fi
@@ -979,8 +976,8 @@ for i in "${!SAMPLE_NAME[@]}"; do
         for file in temp_sam.*; do
             echo "perl ${SHOTMETA_DB}/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
         done
-        parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt 
-        if [ -f temp.sam ]; then 
+        parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt
+        if [ -f temp.sam ]; then
             rm temp.sam;
         fi
         samtools view -H --no-PG lambda_aligned.sam > temp.bad.sam
@@ -999,14 +996,14 @@ for i in "${!SAMPLE_NAME[@]}"; do
         samtools view -b -@ $THREADS temp.bad.sam | samtools fastq -@ $THREADS -1 temp_R1.fastq -2 temp_R2.fastq 2>/dev/null
         cat temp_R1.fastq >> no_lambda_R1.fastq; rm temp_R1.fastq
         cat temp_R2.fastq >> no_lambda_R2.fastq; rm temp_R2.fastq
-        ${SHOTMETA_DB}/compare_fastq.pl no_lambda_R1.fastq no_lambda_R2.fastq no_human_R1.fastq no_human_R2.fastq 
+        ${SHOTMETA_DB}/compare_fastq.pl no_lambda_R1.fastq no_lambda_R2.fastq no_human_R1.fastq no_human_R2.fastq
         mv R1_new.fastq no_lambda_R1.fastq
         mv R2_new.fastq no_lambda_R2.fastq
 
 
         #echo -e "${Purple}calculating number of reads${Color_Off}";
         #samtools view -b -@ $THREADS lambda_alignments.sam | samtools fastq -@ $THREADS -1 temp_R1.fastq -2 temp_R2.fastq
-        #if [ -s temp_R1.fastq ] && [ -s temp_R2.fastq ]; then 
+        #if [ -s temp_R1.fastq ] && [ -s temp_R2.fastq ]; then
             #prinseq-lite.pl -derep 235 -fastq temp_R1.fastq -fastq2 temp_R2.fastq -log temp.log;
             #cat temp.log | grep -Po "Good sequences \(pairs\)\: \K\d.+" > lambda_read_count.txt;
             #rm temp_R1*.fastq temp_R2*.fastq temp.log;
@@ -1026,7 +1023,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
         LAMBDA_READ_COUNT=$((USEABLE_READ_COUNT - HUMAN_READ_COUNT - (x / 4)))
         echo $LAMBDA_READ_COUNT > Lambda_read_count.txt
 
-        rm lambda_aligned.sam 
+        rm lambda_aligned.sam
         rm lambda_alignments.sam
         rm $PROJ_DIR/logs/parallel_commands_perl.txt
         rm no_human_R1.fastq no_human_R2.fastq
@@ -1051,8 +1048,8 @@ for i in "${!SAMPLE_NAME[@]}"; do
         for file in temp_sam.*; do
             echo "perl ${SHOTMETA_DB}/remove_poor_sam_alignments.pl $file" >> $PROJ_DIR/logs/parallel_commands_perl.txt
         done
-        parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt 
-        if [ -f temp.sam ]; then 
+        parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_perl.txt
+        if [ -f temp.sam ]; then
             rm temp.sam;
         fi
         samtools view -H --no-PG MS2_aligned.sam > temp.bad.sam
@@ -1071,14 +1068,14 @@ for i in "${!SAMPLE_NAME[@]}"; do
         samtools view -b -@ $THREADS temp.bad.sam | samtools fastq -@ $THREADS -1 temp_R1.fastq -2 temp_R2.fastq 2>/dev/null
         cat temp_R1.fastq >> extra_R1.fastq; rm temp_R1.fastq
         cat temp_R2.fastq >> extra_R2.fastq; rm temp_R2.fastq
-        ${SHOTMETA_DB}/compare_fastq.pl extra_R1.fastq extra_R2.fastq no_lambda_R1.fastq no_lambda_R2.fastq 
+        ${SHOTMETA_DB}/compare_fastq.pl extra_R1.fastq extra_R2.fastq no_lambda_R1.fastq no_lambda_R2.fastq
         mv R1_new.fastq extra_R1.fastq
         mv R2_new.fastq extra_R2.fastq
 
 
         #echo -e "${Purple}calculating number of reads${Color_Off}";
         #samtools view -b -@ $THREADS MS2_alignments.sam | samtools fastq -@ $THREADS -1 temp_R1.fastq -2 temp_R2.fastq
-        #if [ -s temp_R1.fastq ] && [ -s temp_R2.fastq ]; then 
+        #if [ -s temp_R1.fastq ] && [ -s temp_R2.fastq ]; then
             #prinseq-lite.pl -derep 235 -fastq temp_R1.fastq -fastq2 temp_R2.fastq -log temp.log;
             #cat temp.log | grep -Po "Good sequences \(pairs\)\: \K\d.+" > MS2_read_count.txt;
             #rm temp_R1*.fastq temp_R2*.fastq temp.log;
@@ -1099,9 +1096,9 @@ for i in "${!SAMPLE_NAME[@]}"; do
         echo $MS2_READ_COUNT > MS2_read_count.txt
 
 
-        rm MS2_aligned.sam 
+        rm MS2_aligned.sam
         rm MS2_alignments.sam
-        rm $PROJ_DIR/logs/parallel_commands_perl.txt 
+        rm $PROJ_DIR/logs/parallel_commands_perl.txt
         rm no_lambda_R1.fastq no_lambda_R2.fastq
 
         rm temp.bam temp.bad.sam
@@ -1117,7 +1114,7 @@ done
 # ---------------------------------------------------------------------
 # Use prinseq to remove duplicate sequences
 # ---------------------------------------------------------------------
-# prinseq-lite.pl script is not parallelized, so use GNU parallel
+# prinseq-lite.pl script is not parallelized, so use prinseq++
 echo ""
 echo -e "${Red}---------------------------------------------------------------------"
 echo "Running prinseq to remove duplicate sequences"
@@ -1125,17 +1122,18 @@ echo -e "---------------------------------------------------------------------${
 echo ""
 
 module purge
-module load prinseq/0.20.4
-module load parallel/20180922
+#module load prinseq/0.20.4
+#module load parallel/20180922
 module load pigz
-
+PRINSEQ_CALL=`echo "/home/thyagara/victo160/csf_mNGS/PRINSEQ-plus-plus/prinseq++"`
 
 if [ -f $PROJ_DIR/logs/parallel_commands_prinseq.txt ]; then
     rm $PROJ_DIR/logs/parallel_commands_prinseq.txt;
 fi
 
-echo $(prinseq-lite.pl -version) >> $PROJ_DIR/logs/software_versions.txt
-echo $(parallel --version) >> $PROJ_DIR/logs/software_versions.txt
+echo `${PRINSEQ_CALL} -v` >> $PROJ_DIR/logs/software_versions.txt
+#echo $(prinseq-lite.pl -version) >> $PROJ_DIR/logs/software_versions.txt
+#echo $(parallel --version) >> $PROJ_DIR/logs/software_versions.txt
 for i in "${!SAMPLE_NAME[@]}"; do
     if [[ "${SAMPLE_NAME[$i]}" =~ "NEGATIVE" ]] && [[ "$PROCESS" == "FALSE" ]] ; then
         :
@@ -1149,14 +1147,20 @@ for i in "${!SAMPLE_NAME[@]}"; do
         if [ -f ${R1}.gz ] && [ ! -f $R1 ]; then echo -e "Unzipping $R1\n"; gzip -dvf ${R1}.gz; fi
         if [ -f ${R2}.gz ] && [ ! -f $R2 ]; then echo -e "Unzipping $R2\n"; gzip -dvf ${R2}.gz; fi
 
+        if [ -f prinseq.log ]; then
+            rm prinseq.log;
+        fi
+
         #cat $R1 $R2 > temp.fastq
         #echo "prinseq-lite.pl -derep 123 -fastq $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/05_prinseq/temp.fastq -out_good $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/05_prinseq/prinseq -out_bad $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/05_prinseq/prinseq_duplicates -log $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/05_prinseq/prinseq.log" >> $PROJ_DIR/logs/parallel_commands_prinseq.txt
-        echo "prinseq-lite.pl -derep 235 -fastq $R1 -fastq2 $R2 -out_good $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/05_prinseq/prinseq -out_bad $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/05_prinseq/prinseq_duplicates -log $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/05_prinseq/prinseq.log" >> $PROJ_DIR/logs/parallel_commands_prinseq.txt
+        #echo "prinseq-lite.pl -derep 235 -fastq $R1 -fastq2 $R2 -out_good $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/05_prinseq/prinseq -out_bad $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/05_prinseq/prinseq_duplicates -log $PROJ_DIR/samples/${SAMPLE_NAME[$i]}/05_prinseq/prinseq.log" >> $PROJ_DIR/logs/parallel_commands_prinseq.txt
+        $PRINSEQ_CALL -threads $THREADS -derep 235 -fastq $R1 -fastq2 $R2 -out_good prinseq_1.fastq -out_good2 prinseq_2.fastq \
+        -out_bad prinseq_duplicates_1.fastq -out_bad2 prinseq_duplicates_2.fastq -out_single /dev/null -out_single2 /dev/null > prinseq.log
     fi
 done
 
 # Run prinseq commands in parallel
-parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_prinseq.txt
+#parallel --jobs $THREADS < $PROJ_DIR/logs/parallel_commands_prinseq.txt
 
 for i in "${!SAMPLE_NAME[@]}"; do
     if [[ "${SAMPLE_NAME[$i]}" =~ "NEGATIVE" ]] && [[ "$PROCESS" == "FALSE" ]] ; then
@@ -1239,7 +1243,7 @@ for i in "${!SAMPLE_NAME[@]}"; do
             kaiju -v -x -a greedy -e 3 -m 11 -z $THREADS -t $NODES -f $FMI -i $R1 -j $R2 -o kaiju.loose
             kaiju -v -x -a greedy -e 5 -m 25 -z $THREADS -t $NODES -f $FMI -i $R1 -j $R2 -o kaiju.strict
 
-            # pull only matched 
+            # pull only matched
             grep -P "^C" kaiju.strict > kaiju.strict.hits
 
             # generate kaiju.report
@@ -1404,7 +1408,7 @@ echo -e "---------------------------------------------------------------------${
 echo ""
 
 module load parallel/20180922
-        
+
 for i in "${!SAMPLE_NAME[@]}"; do
     if [[ "${SAMPLE_NAME[$i]}" =~ "_DNA_" ]]; then
         if [[ "${SAMPLE_NAME[$i]}" =~ "NEGATIVE" ]] && [[ "$PROCESS" == "FALSE" ]] ; then
@@ -1425,7 +1429,7 @@ if [ -f $PROJ_DIR/logs/parallel_commands_kraken_filter.txt ]; then
     rm $PROJ_DIR/logs/parallel_commands_kraken_filter.txt
 fi
 
-        
+
 # ---------------------------------------------------------------------
 # Create kraken reports for thresholded sample data
 # ---------------------------------------------------------------------
@@ -1502,7 +1506,7 @@ if [ -f $PROJ_DIR/logs/parallel_commands_kraken_filter.txt ]; then
     rm $PROJ_DIR/logs/parallel_commands_kraken_filter.txt
 fi
 
-        
+
 # ---------------------------------------------------------------------
 # Create Kraken pie charts
 # ---------------------------------------------------------------------
